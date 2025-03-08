@@ -2,6 +2,7 @@
 F_CPU = 16000000UL
 TARGET = main
 CC = avr-gcc
+INCLUDES = -I.
 
 AVRGCC_MCU_TYPE = atmega328p
 AVRDUDE_MCU_TYPE = m328p
@@ -34,7 +35,7 @@ hex: $(TARGET).hex
 #	-D : defines a preprocessor macro (#define F_CPU <value>)
 #	-o : output filename
 $(TARGET).bin: $(TARGET).c
-	$(CC) -mmcu=$(AVRGCC_MCU_TYPE) -D F_CPU=$(F_CPU) $(TARGET).c -Os -o $(TARGET).bin
+	$(CC) -mmcu=$(AVRGCC_MCU_TYPE) -D F_CPU=$(F_CPU) $(INCLUDES) $(TARGET).c -Os -o $(TARGET).bin
 
 # avr-objcopy : man avr-jobcopy, https://linux.die.net/man/1/avr-objcopy
 #	-O : specifies output format, Intel HEX
