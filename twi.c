@@ -53,18 +53,36 @@ void twi_write(uint8_t data) {
 }
 
 uint8_t twi_read(uint8_t ack) {
+    flash_led(D1); // Before setting TWCR
     if (ack) {
         TWCR = SEND_ACKNOWLEDGE;                                    // Send ACK to request more data
     } else {
         TWCR = SEND_NACKNOWLEDGE;                                   // Send NACK to indicate last byte read
     }
-    while (!(TEST(TWCR, TWINT)));                                   // Wait for data reception
+
+    // while (!(TEST(TWCR, TWINT)));                                   // Wait for data reception
+    // Add a timeout to prevent infinite waiting
+    uint16_t timeout = 1000;
+    while (!(TEST(TWCR, TWINT)) && timeout > 0) {
+        timeout--;
+        _delay_us(10);
+    }
+
+    flash_led(D2); // After TWINT set or timeout
+
+    if (timeout == 0) {
+        // Timeout occurred, slave didn't respond
+        flash_led(D3); // Indicate timeout
+        TWCR = SEND_STOP_CONDITION;
+        return 0xFF; // Error code for timeout
+    }
 
 	uint8_t status = TWSR & MASK_WITHOUT_LAST_3;
     if (status != TW_MR_DATA_ACK && status != TW_MR_DATA_NACK) {
         TWCR = SEND_STOP_CONDITION;
         return 0;
     }
+        flash_led(D4); // Indicate status error
     return TWDR;
 }
 
@@ -81,7 +99,7 @@ void write_one_byte_data(uint8_t data) {
 uint8_t read_one_byte_data() {
     twi_start();
     twi_send_addr((SLAVE_ADDRESS << 1) | TW_READ);				// Send Slave address with Write bit
-    uint8_t data = twi_read(TRUE);                                 // Read data with NACK (only one byte expected)
+    uint8_t data = twi_read(FALSE);								// Read data with NACK (only one byte expected)
     twi_stop();
     return data;
 }
