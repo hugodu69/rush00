@@ -32,18 +32,30 @@
 #define MASK_WITHOUT_LAST_3				11111000					// 0xF8
 
 // FUNCTION PROTOTYPES
-// twi.c
-void TWI_init_master();
-void TWI_start();
-void TWI_write_addr(uint8_t addr_w);
-void TWI_write(uint8_t data);
-void TWI_stop();
-void send_one_byte_data(uint8_t data);
 // main.c
+void flash_led();
+// twi.c
+void twi_init_slave(void);
+void twi_stop_slave(void);
+void twi_init_master();
+void twi_start();
+void twi_write_addr(uint8_t addr_w);
+void twi_write(uint8_t data);
+void twi_stop();
+void send_one_byte_data(uint8_t data);
+// interupts.c
 void setup_button_interrupt();
 void setup_button_role();
-void flash_led_1();
+// roles.c
+void get_role();
 
 // GLOBAL VARIABLES
+typedef enum {
+	WAITING,
+    MASTER,
+    SLAVE
+} Role;
+extern volatile Role role;
+// extern volatile uint8_t received_data;
 
-#endif
+#endif // RUSH_HEADER_H

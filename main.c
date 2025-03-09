@@ -1,70 +1,28 @@
 #include "rush_header.h"
 
-// -----------------------------------------------------------------------------------------------------------
-// MASTER
+#define BLINK_PERIOD						1000
+#define BLINK_PRESCALE_VALUE				1024		            			        // can be 1, 8, 64, 256, 1024
+#define BLINK_DUTY_CYCLE					10
 
-
-
-void setup_button_interrupt() {										// Interruption SW1 (PD2)
-    EICRA |= (1 << ISC01);      									// trigger on falling edge for INT0
-    EIMSK |= (1 << INT0);       									// Activate INT0
-
-	MODE_OUTPUT(LED1);
-
-    SREG |= (1 << SREG_I);  
-}
-
-void setup_button_role() {											// Interruption SW2 (PD4)
-    PCICR |= (1 << PCIE2);											// Activate PCINT[23:16] (PORTD)
-    PCMSK2 |= (1 << PCINT20);										// Activate l'interrupt on PD4
-
-	MODE_OUTPUT(LED1);
-
-    SREG |= (1 << SREG_I);  
-}
-
-void flash_led_1() {
-    SET_ELEM(LED1);
+void flash_led(int bit) {
+    SET(PORTB, bit);
     _delay_ms(100);
-    CLEAR_ELEM(LED1);
+    SET(PORTB, bit);
 }
+
+// void blink_led(int bit) {
+// 	MODE_OUTPUT(LED2);
+//     SET(TCCR1A, WGM11);							                						// Table 16-4 : set timer in Fast PWM (Pulse With Modulation) mode with TOP = ICR1 (Mode 14)
+// 	SET(TCCR1B, WGM12);
+//     SET(TCCR1B, WGM13);
+// 	SET(TCCR1A, COM1A1);						                							// Table 16-2 : non-inverting mode, the LED will be ON for DUTY_CYCLE% of the time (CLEAR OC1A on compare match, SET OC1A at BOTTOM)
+//     ICR1 = TIME_MS(BLINK_PERIOD, BLINK_PRESCALE_VALUE);		              			  	// Table 16-4 : set the period (compare TOP value)
+//     OCR1A = TIME_MS(PERCENT(BLINK_DUTY_CYCLE, BLINK_PERIOD), BLINK_PRESCALE_VALUE);		// 16.9.3 : set the duty cycle to DUTY_CYCLE% of the time on channel A -> OC1A (alternate function of PORTB1, aka LED2) is cleared when TCNT1 (the counter value) equals OCR1A
+//     TCCR1B |= (PRESCALE_SET(BLINK_PRESCALE_VALUE));	                					// start the timer with the prescaler
+// }
 
 int main() {
-    TWI_init_master();
 	setup_button_interrupt();
 	setup_button_role();
     while (1);
 }
-
-
-// -----------------------------------------------------------------------------------------------------------
-// SLAVE
-
-
-// volatile uint8_t received_data = 0;
-
-// void TWI_init_slave(void) {
-//     TWAR = (SLAVE_ADDRESS << 1);
-    
-//     TWCR = (1 << TWEN) | (1 << TWEA) | (1 << TWIE);		// Enable TWI, enable ACK, and enable TWI interrupt
-    
-//     SREG |= (1 << SREG_I);
-// }
-
-// ISR(TWI_vect) {											// Table 12-1 : 25, 2-wire Serial Interface
-//     if ((TWSR & 0xF8) == TW_SR_DATA_ACK) {				// Check if this is a data receive event (TWDR has valid data)
-// 		// blink led
-//     	SET_ELEM(LED1);
-//     	_delay_ms(100);
-//     	CLEAR_ELEM(LED1);
-//     }
-    
-//     TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWEA) | (1 << TWIE);	// Clear interrupt flag and enable next transfer
-// }
-
-// int main() {
-//     MODE_OUTPUT(LED1);									// Initialize LED
-// 	CLEAR_ELEM(LED1);									// ensure led is initially off
-//     TWI_init_slave();
-//     while (1);
-// }

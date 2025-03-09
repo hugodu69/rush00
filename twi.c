@@ -1,11 +1,21 @@
 #include "rush_header.h"
 
-void TWI_init_master() {
+void twi_init_slave(void) {
+    TWAR = (SLAVE_ADDRESS << 1);
+    TWCR = (1 << TWEN) | (1 << TWEA) | (1 << TWIE);					// Enable TWI, enable ACK, and enable TWI interrupt
+    SREG |= (1 << SREG_I);
+}
+void twi_stop_slave(void) {
+    TWCR = 0x00;													// Disable TWI interrupts and TWI module
+    TWAR = 0x00;													// Optionally, clear the TWI address register
+}
+
+void twi_init_master() {
     TWSR = TWI_PRESCALE_SET(TWI_PRESCALE_VALUE);					// 22.9.3 : (Status Register) set prescaler
     TWBR = ((F_CPU / TWI_FREQ) - 16) / (2 * TWI_PRESCALE_VALUE);	// 22.9.1 : (Bit Rate Register) set SCL frequency (formula from datasheet, 22.5.2)
 }
 
-void TWI_start() {
+void twi_start() {
     TWCR = SEND_START_CONDITION;									// 22.9.2 : (Control Register) send Start condition (22.7.1) ! writting 1 to TWINT clears it (set it to 0)
     while (!(TEST(TWCR, TWINT)));									// p225 example code : Wait for TWINT Flag set. This indicates that the START condition has been transmitted
 
@@ -16,7 +26,7 @@ void TWI_start() {
     }
 }
 
-void TWI_write_addr(uint8_t addr_w) {
+void twi_write_addr(uint8_t addr_w) {
     TWDR = addr_w;													// 22.9.4 : (Data Register) load data into TWDR register
     TWCR = SEND_CONTINUE_TRANSMISSION;								// p225 example code : Load SLA_W into TWDR Register. Clear TWINT bit in TWCR to start transmission of address
     while (!(TEST(TWCR, TWINT)));									// p225 example code : Wait for TWINT Flag set. This indicates that the SLA+W has been transmitted, and ACK/NACK has been received
@@ -28,7 +38,7 @@ void TWI_write_addr(uint8_t addr_w) {
     }
 }
 
-void TWI_write(uint8_t data) {
+void twi_write(uint8_t data) {
     TWDR = data;													// 22.9.4 : (Data Register) load data into TWDR register
     TWCR = SEND_CONTINUE_TRANSMISSION;								// p225 example code : Load DATA into TWDR Register. Clear TWINT bit in TWCR to start transmission of data
     while (!(TEST(TWCR, TWINT)));									// p225 example code : Wait for TWINT Flag set. This indicates that the DATA has been transmitted, and ACK/NACK has been received
@@ -40,13 +50,13 @@ void TWI_write(uint8_t data) {
     }
 }
 
-void TWI_stop() {
+void twi_stop() {
     TWCR = SEND_STOP_CONDITION;
 }
 
 void send_one_byte_data(uint8_t data) {
-    TWI_start();
-    TWI_write_addr((SLAVE_ADDRESS << 1) | TW_WRITE);				// Send Slave address with Write bit
-    TWI_write(data);												// Send data byte
-    TWI_stop();
+    twi_start();
+    twi_write_addr((SLAVE_ADDRESS << 1) | TW_WRITE);				// Send Slave address with Write bit
+    twi_write(data);												// Send data byte
+    twi_stop();
 }

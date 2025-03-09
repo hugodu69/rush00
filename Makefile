@@ -70,11 +70,12 @@ $(TARGET).hex: $(TARGET).bin
 #	(-v : verbose info dump)
 flash:
 	avrdude -p $(AVRDUDE_MCU_TYPE) -c $(PROGRAMMER_ID) -b $(BAUD_RATE) -P $(SERIAL_PORT) -U flash:w:$(TARGET).hex
+	avrdude -p $(AVRDUDE_MCU_TYPE) -c $(PROGRAMMER_ID) -b $(BAUD_RATE) -P /dev/ttyUSB1 -U flash:w:$(TARGET).hex
 
 restore:
 	avrdude -p $(AVRDUDE_MCU_TYPE) -c $(PROGRAMMER_ID) -b $(BAUD_RATE) -P $(SERIAL_PORT) -U flash:w:$(DUMP_ORI)
 
 clean:
-	rm -f main.hex main.bin
+	rm -f main.hex main.bin $(OBJ)
 
 .PHONY : all clean hex flash restore
