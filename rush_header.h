@@ -25,9 +25,11 @@
 // Slave address
 #define SLAVE_ADDRESS					42							// 22.3.3 : address 0000000 and 1111xxx are reservedm 42 is 0101010
 // 22.7.1 : TWCR, Master Transmitter Mode
-#define SEND_START_CONDITION			((1<<TWINT) | (1<<TWSTA) | (1<<TWEN))
+#define SEND_START_CONDITION			((1<<TWINT) | (1<<TWEN)) | (1<<TWSTA)
 #define SEND_CONTINUE_TRANSMISSION		((1<<TWINT) | (1<<TWEN))
-#define SEND_STOP_CONDITION				((1<<TWINT) | (1<<TWSTO) | (1<<TWEN))
+#define SEND_STOP_CONDITION				((1<<TWINT) | (1<<TWEN)) | (1<<TWSTO)
+#define SEND_ACKNOWLEDGE				((1<<TWINT) | (1<<TWEN)  | (1<<TWEA))
+#define SEND_NACKNOWLEDGE				((1<<TWINT) | (1<<TWEN))
 
 #define MASK_WITHOUT_LAST_3				0xF8						// 11111000
 
@@ -36,6 +38,8 @@
 void flash_led();
 void blink_led_2();
 void turn_on_led(int bit);
+void turn_on_led_1_light();
+void turn_on_led_2_light();
 void turn_off_led(int bit);
 // twi.c
 void twi_init_slave(void);
@@ -44,9 +48,9 @@ void twi_init_master();
 void twi_start();
 void twi_send_addr(uint8_t addr_w);
 void write_one_byte_data(uint8_t data);
-void read_one_byte_data();
+uint8_t read_one_byte_data();
 void twi_write(uint8_t data);
-void twi_read();
+uint8_t twi_read(uint8_t ack);
 void twi_stop();
 // interupts.c
 void setup_button_interrupt();

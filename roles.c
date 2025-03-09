@@ -1,14 +1,12 @@
 #include "rush_header.h"
 
 void get_role() {
-	MODE_INPUT(BUTTON1);	// set as input
-	SET_ELEM(BUTTON1);		// pull-up resistor on
 	int end = FALSE;
 	while(!end) {
 		_delay_ms(50);
 		if (role == SLAVE) {
 			end = TRUE;
-			MODE_OUTPUT(BUTTON1);
+			// MODE_OUTPUT(BUTTON1);
 			continue;
 		}
 		if (!IS_PIN_SET(BUTTON1)) {

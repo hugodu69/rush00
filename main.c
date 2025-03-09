@@ -13,6 +13,18 @@ void turn_on_led(int bit) {
 	SET(DDRB, bit);
     SET(PORTB, bit);
 }
+void turn_on_led_2_light() {
+    uint8_t duty = 10;
+    // Set PB1 (OC1A) as output
+    DDRB |= (1 << PB1);
+
+    // Configure Timer1 for Fast PWM, 8-bit mode
+    TCCR1A = (1 << COM1A1) | (1 << WGM10); // Clear OC1A on compare match, Fast PWM
+    TCCR1B = (1 << WGM12) | (1 << CS11);   // Prescaler 8
+
+    // Set duty cycle (0-255, where 255 = fully ON, 0 = fully OFF)
+    OCR1A = duty;
+}
 void turn_off_led(int bit) {
 	SET(DDRB, bit);
     CLEAR(PORTB, bit);
@@ -29,6 +41,9 @@ void blink_led_2(int period) {
 }
 
 int main() {
+	MODE_INPUT(BUTTON1);	// set as input
+	SET_ELEM(BUTTON1);		// pull-up resistor on
+
 	twi_init_slave();
 	get_role();
 	setup_button_interrupt();

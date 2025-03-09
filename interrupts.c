@@ -11,16 +11,16 @@ void setup_button_interrupt() {										// interruption SW1 (PD2)
 
 ISR(INT0_vect) {													// interruption SW1 (PD2)
 	if (!TEST_PIN(BUTTON1)) {
+    	_delay_ms(30);
 		flash_led(D4);
-		get_role();
 		if (role == MASTER) {
 			write_one_byte_data(0x01);
+			// read_one_byte_data(0x01);
 		} else if (role == SLAVE) {
 			// PORTD &= ~(1 << PD2); // Pull PD2 low (active LOW signal)
     		// _delay_ms(10);        // Give master time to catch the signal
     		// PORTD |= (1 << PD2);  // Reset line HIGH
 		}
-    	_delay_ms(30);
 	}
 }
 
@@ -28,21 +28,19 @@ ISR(TWI_vect) {														// interruption slave receive data, Table 12-1 : 25
     uint8_t status = TWSR & MASK_WITHOUT_LAST_3;
 
     switch (status) {
-        case TW_SR_SLA_ACK:											// SLA+W received
+        case TW_SR_SLA_ACK:											// SLA+W received, ACK sent
+            flash_led(D4);
+            turn_on_led_2_light();
             break;
 
-        case TW_SR_DATA_ACK:										// data received
-            flash_led(D4);
+        case TW_SR_DATA_ACK:										// data received, ACK sent
             if (role == WAITING) {
                 role = SLAVE;
             }
+            received_data = TWDR;                                   // store received data
             break;
 
 		case TW_ST_DATA_ACK:										// Data sent, ACK received
-            flash_led(D4);
-            if (role == WAITING) {
-                role = SLAVE;
-            }
             TWDR = 0x10;
             break;
 

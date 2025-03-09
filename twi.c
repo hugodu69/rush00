@@ -52,20 +52,20 @@ void twi_write(uint8_t data) {
     }
 }
 
-void twi_read() {
-    TWCR = SEND_CONTINUE_TRANSMISSION;
-    while (!(TEST(TWCR, TWINT)));
+uint8_t twi_read(uint8_t ack) {
+    if (ack) {
+        TWCR = SEND_ACKNOWLEDGE;                                    // Send ACK to request more data
+    } else {
+        TWCR = SEND_NACKNOWLEDGE;                                   // Send NACK to indicate last byte read
+    }
+    while (!(TEST(TWCR, TWINT)));                                   // Wait for data reception
 
 	uint8_t status = TWSR & MASK_WITHOUT_LAST_3;
-    if (status != TW_MT_DATA_ACK) {
+    if (status != TW_MR_DATA_ACK && status != TW_MR_DATA_NACK) {
         TWCR = SEND_STOP_CONDITION;
-        return;
+        return 0;
     }
-
-    received_data = TWDR;
-	if (TWDR == 0x10) {
-		flash_led(D1);
-	}
+    return TWDR;
 }
 
 void twi_stop() {
@@ -78,9 +78,10 @@ void write_one_byte_data(uint8_t data) {
     twi_write(data);											// write data byte
     twi_stop();
 }
-void read_one_byte_data() {
+uint8_t read_one_byte_data() {
     twi_start();
     twi_send_addr((SLAVE_ADDRESS << 1) | TW_READ);				// Send Slave address with Write bit
-    twi_read();												// read data byte
+    uint8_t data = twi_read(TRUE);                                 // Read data with NACK (only one byte expected)
     twi_stop();
+    return data;
 }
