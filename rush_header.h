@@ -29,11 +29,14 @@
 #define SEND_CONTINUE_TRANSMISSION		((1<<TWINT) | (1<<TWEN))
 #define SEND_STOP_CONDITION				((1<<TWINT) | (1<<TWSTO) | (1<<TWEN))
 
-#define MASK_WITHOUT_LAST_3				11111000					// 0xF8
+#define MASK_WITHOUT_LAST_3				0xF8						// 11111000
 
 // FUNCTION PROTOTYPES
 // main.c
 void flash_led();
+void blink_led_2();
+void turn_on_led(int bit);
+void turn_off_led(int bit);
 // twi.c
 void twi_init_slave(void);
 void twi_stop_slave(void);

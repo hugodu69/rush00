@@ -6,8 +6,8 @@ void twi_init_slave(void) {
     SREG |= (1 << SREG_I);
 }
 void twi_stop_slave(void) {
-    TWCR = 0x00;													// Disable TWI interrupts and TWI module
-    TWAR = 0x00;													// Optionally, clear the TWI address register
+    // TWCR = 0x00;													// Disable TWI interrupts and TWI module
+    // TWAR = 0x00;													// Optionally, clear the TWI address register
 }
 
 void twi_init_master() {
