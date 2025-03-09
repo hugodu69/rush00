@@ -1,5 +1,7 @@
 #include "rush_header.h"
 
+volatile uint8_t received_data = 0;
+
 void twi_init_slave(void) {
     TWAR = (SLAVE_ADDRESS << 1);
     TWCR = (1 << TWEN) | (1 << TWEA) | (1 << TWIE);					// Enable TWI, enable ACK, and enable TWI interrupt
@@ -26,8 +28,8 @@ void twi_start() {
     }
 }
 
-void twi_write_addr(uint8_t addr_w) {
-    TWDR = addr_w;													// 22.9.4 : (Data Register) load data into TWDR register
+void twi_send_addr(uint8_t addr_r_w) {
+    TWDR = addr_r_w;												// 22.9.4 : (Data Register) load data into TWDR register
     TWCR = SEND_CONTINUE_TRANSMISSION;								// p225 example code : Load SLA_W into TWDR Register. Clear TWINT bit in TWCR to start transmission of address
     while (!(TEST(TWCR, TWINT)));									// p225 example code : Wait for TWINT Flag set. This indicates that the SLA+W has been transmitted, and ACK/NACK has been received
 
@@ -50,13 +52,35 @@ void twi_write(uint8_t data) {
     }
 }
 
+void twi_read() {
+    TWCR = SEND_CONTINUE_TRANSMISSION;
+    while (!(TEST(TWCR, TWINT)));
+
+	uint8_t status = TWSR & MASK_WITHOUT_LAST_3;
+    if (status != TW_MT_DATA_ACK) {
+        TWCR = SEND_STOP_CONDITION;
+        return;
+    }
+
+    received_data = TWDR;
+	if (TWDR == 0x10) {
+		flash_led(D1);
+	}
+}
+
 void twi_stop() {
     TWCR = SEND_STOP_CONDITION;
 }
 
-void send_one_byte_data(uint8_t data) {
+void write_one_byte_data(uint8_t data) {
     twi_start();
-    twi_write_addr((SLAVE_ADDRESS << 1) | TW_WRITE);				// Send Slave address with Write bit
-    twi_write(data);												// Send data byte
+    twi_send_addr((SLAVE_ADDRESS << 1) | TW_WRITE);				// Send Slave address with Write bit
+    twi_write(data);											// write data byte
+    twi_stop();
+}
+void read_one_byte_data() {
+    twi_start();
+    twi_send_addr((SLAVE_ADDRESS << 1) | TW_READ);				// Send Slave address with Write bit
+    twi_read();												// read data byte
     twi_stop();
 }

@@ -42,15 +42,19 @@ void twi_init_slave(void);
 void twi_stop_slave(void);
 void twi_init_master();
 void twi_start();
-void twi_write_addr(uint8_t addr_w);
+void twi_send_addr(uint8_t addr_w);
+void write_one_byte_data(uint8_t data);
+void read_one_byte_data();
 void twi_write(uint8_t data);
+void twi_read();
 void twi_stop();
-void send_one_byte_data(uint8_t data);
 // interupts.c
 void setup_button_interrupt();
 void setup_button_role();
 // roles.c
 void get_role();
+// game.c
+void launch_game();
 
 // GLOBAL VARIABLES
 typedef enum {
@@ -59,6 +63,6 @@ typedef enum {
     SLAVE
 } Role;
 extern volatile Role role;
-// extern volatile uint8_t received_data;
+extern volatile uint8_t received_data;
 
 #endif // RUSH_HEADER_H

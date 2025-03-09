@@ -32,5 +32,6 @@ int main() {
 	twi_init_slave();
 	get_role();
 	setup_button_interrupt();
+	// launch_game();
     while (1);
 }
