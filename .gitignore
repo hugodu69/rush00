@@ -51,3 +51,4 @@ Thumbs.db
 # chips
 *.bin
 *.hex
+*.o
