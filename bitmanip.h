@@ -4,10 +4,10 @@
 #include "utils.h"
 
 // Bit operations on registers
-#define SET(register, bit)		(register |= (1UL << (bit)))
-#define CLEAR(register, bit)	(register &= ~(1UL << (bit)))
-#define TEST(register, bit)		(register & (1UL << (bit)))
-#define TOGGLE(register, bit)	(register ^= (1UL << (bit)))
+#define SET(register, bit)		(register |= (1 << (bit)))
+#define CLEAR(register, bit)	(register &= ~(1 << (bit)))
+#define TEST(register, bit)		(register & (1 << (bit)))
+#define TOGGLE(register, bit)	(register ^= (1 << (bit)))
 
 // Get arguments from tuple-like definitions
 #define ARG_1(v1, v2)			v1

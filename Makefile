@@ -25,9 +25,11 @@ OS := $(shell uname -s)
 
 # Set Serial Port based on OS
 ifeq ($(OS), Darwin)  # macOS
-    SERIAL_PORT := $(shell ls /dev/tty.usb* 2>/dev/null | head -n 1) # should be : /dev/tty.usbserial-310
+    SERIAL_PORT_1 := /dev/tty.usbserial-310 # $(shell ls /dev/tty.usb* 2>/dev/null | head -n 1) # should be : /dev/tty.usbserial-310
+    SERIAL_PORT_2 := /dev/tty.usbserial-110
 else ifeq ($(OS), Linux)  # Ubuntu/Linux
-    SERIAL_PORT = $(shell ls /dev/ttyUSB* 2>/dev/null | head -n 1) # should be : /dev/ttyUSB0
+    SERIAL_PORT_1 = /dev/ttyUSB0 # $(shell ls /dev/ttyUSB* 2>/dev/null | head -n 1) # should be : /dev/ttyUSB0
+    SERIAL_PORT_2 = /dev/ttyUSB1
 endif
 
 ##
@@ -69,8 +71,8 @@ $(TARGET).hex: $(TARGET).bin
 #	-U : Uploads (w = write) the HEX firmware file to the flash memory
 #	(-v : verbose info dump)
 flash:
-	avrdude -p $(AVRDUDE_MCU_TYPE) -c $(PROGRAMMER_ID) -b $(BAUD_RATE) -P $(SERIAL_PORT) -U flash:w:$(TARGET).hex
-	avrdude -p $(AVRDUDE_MCU_TYPE) -c $(PROGRAMMER_ID) -b $(BAUD_RATE) -P /dev/ttyUSB1 -U flash:w:$(TARGET).hex
+	avrdude -p $(AVRDUDE_MCU_TYPE) -c $(PROGRAMMER_ID) -b $(BAUD_RATE) -P $(SERIAL_PORT_1) -U flash:w:$(TARGET).hex
+	avrdude -p $(AVRDUDE_MCU_TYPE) -c $(PROGRAMMER_ID) -b $(BAUD_RATE) -P $(SERIAL_PORT_2) -U flash:w:$(TARGET).hex
 
 restore:
 	avrdude -p $(AVRDUDE_MCU_TYPE) -c $(PROGRAMMER_ID) -b $(BAUD_RATE) -P $(SERIAL_PORT) -U flash:w:$(DUMP_ORI)

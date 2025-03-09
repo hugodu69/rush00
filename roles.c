@@ -1,9 +1,11 @@
 #include "rush_header.h"
 
 void get_role() {
-	MODE_INPUT(BUTTON1);
+	MODE_INPUT(BUTTON1);	// set as input
+	SET_ELEM(BUTTON1);		// pull-up resistor on
 	int end = FALSE;
 	while(!end) {
+		_delay_ms(50);
 		if (role == SLAVE) {
 			end = TRUE;
 			MODE_OUTPUT(BUTTON1);
@@ -17,6 +19,6 @@ void get_role() {
 		role = MASTER;
 		twi_stop_slave();
 		twi_init_master();
-		_delay_ms(50);
+		write_one_byte_data(0x01);
 	}
 }
