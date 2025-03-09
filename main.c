@@ -2,9 +2,14 @@
 #include <util/delay.h>
 #include <util/twi.h>
 #include <avr/interrupt.h>
-#include "headers.h"
 
+#include "utils.h"
+#include "bitmanip.h"
+#include "timer.h"
+#include "usart.h"
+#include "interrupt.h"
 
+// TWI
 // table 22-7 : prescale sets
 #define TWI_PRESCALE_VALUE				1							// can be 1, 4, 16, 64
 #define TWI_PRESCALE_SET(value)  \
@@ -15,13 +20,21 @@
 // 100kHz I2C
 #define TWI_FREQ						100000UL
 // Slave address
-#define SLAVE_ADDRESS					0x10
+#define SLAVE_ADDRESS					42							// 22.3.3 : address 0000000 and 1111xxx are reservedm 42 is 0101010
 // TWCR : Master Transmitter Mode
 #define TWI_ENABLE						(1<<TWEN)
 #define TWI_START						(1<<TWSTA)
 #define TWI_INTERRUPT					(1<<TWINT)
 
+// FUNCTION PROTOTYPES
+void TWI_init_master();
+void TWI_start();
+void TWI_write(uint8_t data);
+void TWI_stop();
+void send_one_byte_data(uint8_t data);
+void setup_button_interrupt();
 
+// GLOBAL VARIABLES
 
 // -----------------------------------------------------------------------------------------------------------
 // MASTER
@@ -49,17 +62,35 @@ void TWI_stop() {
 
 void send_one_byte_data(uint8_t data) {
     TWI_start();
-    // TWI_write((SLAVE_ADDRESS << 1) | TW_WRITE);						// Send Slave address with Write bit
+    TWI_write((SLAVE_ADDRESS << 1) | TW_WRITE);						// Send Slave address with Write bit
     TWI_write(data);												// Send data byte
     TWI_stop();
 }
 
+void setup_button_interrupt() {
+    EICRA |= (1 << ISC01);      // trigger on falling edge for INT0
+    EIMSK |= (1 << INT0);       // Activate INT0
+
+	MODE_OUTPUT(LED1);
+
+    SREG |= (1 << SREG_I);  
+}
+
 int main() {
     TWI_init_master();
+	// setup_button_interrupt();
     while (1) {
         send_one_byte_data(0x01);									// Send 1-byte data
         _delay_ms(1000);
     }
+}
+ISR(INT0_vect)  // Interruption SW1 (PD2)
+{
+    _delay_ms(50);
+	if (!TEST_PIN(BUTTON1)) {
+		TOGGLE_ELEM(LED1);
+		send_one_byte_data(0x01);
+	}
 }
 
 

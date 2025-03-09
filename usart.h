@@ -1,0 +1,31 @@
+#ifndef USART_H
+#define USART_H
+
+#define BAUD_PRESCALER(usart_baudrate)	(DIV_ROUND_CLOSEST(F_CPU, (16 * usart_baudrate)) - 1)
+// Table 20-8 : Mode Selection (USART Mode SELect)
+#define ASYNCHRONOUS					(0<<UMSEL01 | 0<<UMSEL00)
+#define SYNCHRONOUS						(0<<UMSEL01 | 1<<UMSEL00)
+// Table 20-9 : Parity Bit Selection (USART Parity Mode)
+#define PARITY_DISABLED					(0<<UPM01 | 0<<UPM00)
+#define PARITY_EVEN						(1<<UPM01 | 0<<UPM00)
+#define PARITY_ODD						(1<<UPM01 | 1<<UPM00)
+// Table 20-10 : Stop Bit Selection (USART Stop Bit Select)
+#define STOP_ONE_BIT					(0<<USBS0)
+#define STOP_TWO_BIT					(1<<USBS0)
+// Table 20-11 : Data Bit Selection (USART Character SiZe)
+#define DATA_FIVE_BIT					(0<<UCSZ02 | 0<<UCSZ01 | 0<<UCSZ00)
+#define DATA_SIX_BIT					(0<<UCSZ02 | 0<<UCSZ01 | 1<<UCSZ00)
+#define DATA_SEVEN_BIT					(0<<UCSZ02 | 1<<UCSZ01 | 0<<UCSZ00)
+#define DATA_EIGHT_BIT					(0<<UCSZ02 | 1<<UCSZ01 | 1<<UCSZ00)
+#define DATA_NINE_BIT					(1<<UCSZ02 | 1<<UCSZ01 | 1<<UCSZ00)
+// 20.11.3 : USART Control and Status Register B (UCSRnB)
+#define RECEIVER_DISABLED				(0<<RXEN0)
+#define RECEIVER_ENABLED				(1<<RXEN0)
+#define TRANSMITTER_DISABLED			(0<<TXEN0)
+#define TRANSMITTER_ENABLED				(1<<TXEN0)
+#define INTERRUPT_RECEIVER_DISABLED		(0<<RXCIE0)
+#define INTERRUPT_RECEIVER_ENABLED		(1<<RXCIE0)
+#define INTERRUPT_TRANSMITTER_DISABLED	(0<<TXCIE0)
+#define INTERRUPT_TRANSMITTER_ENABLED	(1<<TXCIE0)
+
+#endif // USART_H
