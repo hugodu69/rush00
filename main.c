@@ -21,10 +21,12 @@
 #define TWI_FREQ						100000UL
 // Slave address
 #define SLAVE_ADDRESS					42							// 22.3.3 : address 0000000 and 1111xxx are reservedm 42 is 0101010
-// TWCR : Master Transmitter Mode
-#define TWI_ENABLE						(1<<TWEN)
-#define TWI_START						(1<<TWSTA)
-#define TWI_INTERRUPT					(1<<TWINT)
+// 22.7.1 : TWCR, Master Transmitter Mode
+#define SEND_START_CONDITION			(1<<TWINT) | (1<<TWSTA) | (1<<TWEN)
+#define SEND_CONTINUE_TRANSMISSION		(1<<TWINT) | (1<<TWEN)
+#define SEND_STOP_CONDITION				(1<<TWINT) | (1<<TWSTO) | (1<<TWEN)
+
+#define MASK_WITHOUT_LAST_3				11111000					// 0xF8
 
 // FUNCTION PROTOTYPES
 void TWI_init_master();
@@ -45,31 +47,54 @@ void TWI_init_master() {
 }
 
 void TWI_start() {
-    TWCR = TWI_ENABLE | TWI_START | TWI_INTERRUPT;					// 22.9.2 : (Control Register) send Start condition (22.7.1) ! writting 1 to TWINT clears it (set it to 0)
-    while (!(TEST(TWCR, TWI_INTERRUPT)));							// wait for TWINT flag to be set
+    TWCR = SEND_START_CONDITION;									// 22.9.2 : (Control Register) send Start condition (22.7.1) ! writting 1 to TWINT clears it (set it to 0)
+    while (!(TEST(TWCR, TWINT)));									// p225 example code : Wait for TWINT Flag set. This indicates that the START condition has been transmitted
+
+	uint8_t status = TWSR & MASK_WITHOUT_LAST_3;					// p225 example code : Check value of TWI Status Register. Mask prescaler bits. If status different from START go to ERROR
+    if (status != TW_START && status != TW_REP_START) {
+        TWCR = SEND_STOP_CONDITION;
+        return;
+    }
+}
+
+void TWI_write_addr(uint8_t addr_w) {
+    TWDR = addr_w;													// 22.9.4 : (Data Register) load data into TWDR register
+    TWCR = SEND_CONTINUE_TRANSMISSION;								// p225 example code : Load SLA_W into TWDR Register. Clear TWINT bit in TWCR to start transmission of address
+    while (!(TEST(TWCR, TWINT)));									// p225 example code : Wait for TWINT Flag set. This indicates that the SLA+W has been transmitted, and ACK/NACK has been received
+
+	uint8_t status = TWSR & MASK_WITHOUT_LAST_3;					// Check value of TWI Status Register. Mask prescaler bits. If status different from MT_SLA_ACK go to ERROR
+    if (status != TW_MT_SLA_ACK) {
+        TWCR = SEND_STOP_CONDITION;
+        return;
+    }
 }
 
 void TWI_write(uint8_t data) {
     TWDR = data;													// 22.9.4 : (Data Register) load data into TWDR register
-    TWCR = (1 << TWEN) | (1 << TWINT);								// start transmission
-    while (!(TWCR & (1 << TWINT)));									// wait for TWINT flag to be set
+    TWCR = SEND_CONTINUE_TRANSMISSION;								// p225 example code : Load DATA into TWDR Register. Clear TWINT bit in TWCR to start transmission of data
+    while (!(TEST(TWCR, TWINT)));									// p225 example code : Wait for TWINT Flag set. This indicates that the DATA has been transmitted, and ACK/NACK has been received
+
+	uint8_t status = TWSR & MASK_WITHOUT_LAST_3;					// p225 example code : Check value of TWI Status Register. Mask prescaler bits. If status different from MT_DATA_ACK go to ERROR
+    if (status != TW_MT_DATA_ACK) {
+        TWCR = SEND_STOP_CONDITION;
+        return;
+    }
 }
 
 void TWI_stop() {
-    TWCR = (1 << TWSTO) | (1 << TWEN) | (1 << TWINT); 				// send STOP condition
-	while (TWCR & (1 << TWSTO));									// wait for STOP condition to be executed
+    TWCR = SEND_STOP_CONDITION;
 }
 
 void send_one_byte_data(uint8_t data) {
     TWI_start();
-    TWI_write((SLAVE_ADDRESS << 1) | TW_WRITE);						// Send Slave address with Write bit
+    TWI_write_addr((SLAVE_ADDRESS << 1) | TW_WRITE);				// Send Slave address with Write bit
     TWI_write(data);												// Send data byte
     TWI_stop();
 }
 
 void setup_button_interrupt() {
-    EICRA |= (1 << ISC01);      // trigger on falling edge for INT0
-    EIMSK |= (1 << INT0);       // Activate INT0
+    EICRA |= (1 << ISC01);      									// trigger on falling edge for INT0
+    EIMSK |= (1 << INT0);       									// Activate INT0
 
 	MODE_OUTPUT(LED1);
 
@@ -78,12 +103,10 @@ void setup_button_interrupt() {
 
 int main() {
     TWI_init_master();
-	// setup_button_interrupt();
-    while (1) {
-        send_one_byte_data(0x01);									// Send 1-byte data
-        _delay_ms(1000);
-    }
+	setup_button_interrupt();
+    while (1);
 }
+
 ISR(INT0_vect)  // Interruption SW1 (PD2)
 {
     _delay_ms(50);
@@ -107,7 +130,7 @@ ISR(INT0_vect)  // Interruption SW1 (PD2)
     
 //     TWCR = (1 << TWEN) | (1 << TWEA) | (1 << TWIE);		// Enable TWI, enable ACK, and enable TWI interrupt
     
-//     sei();												// Enable global interrupts
+//     SREG |= (1 << SREG_I);
 // }
 
 // ISR(TWI_vect) {											// Table 12-1 : 25, 2-wire Serial Interface
